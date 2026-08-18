@@ -1,0 +1,104 @@
+openapi: 3.0.3
+info:
+  title: WhatsApp Profile Checker API
+  version: 1.0.0
+  description: Asynchronous bulk WhatsApp verification API for NumberChecker.
+  contact:
+    name: NumberChecker
+    url: https://numberchecker.ai/products/whatsapp-age-gender-checker
+  license:
+    name: MIT
+    url: https://opensource.org/license/mit
+externalDocs:
+  description: NumberChecker API documentation
+  url: https://docs.numberchecker.ai/whatsapp-bulk-number-checker-avatar
+servers:
+  - url: https://api.numberchecker.ai
+security:
+  - ApiKeyAuth: []
+paths:
+  /v1/tasks:
+    post:
+      summary: Create a detection task
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, task_type]
+              properties:
+                file: { type: string, format: binary }
+                task_type:
+                  type: string
+                  enum: ["ws_avatar"]
+      responses:
+        '200': { description: Task accepted by a legacy deployment, content: { application/json: { schema: { $ref: '#/components/schemas/Task' } } } }
+        '202': { description: Task accepted, content: { application/json: { schema: { $ref: '#/components/schemas/Task' } } } }
+        '400': { description: Invalid request }
+        '401': { description: Invalid API key }
+        '402': { description: Insufficient balance }
+        '413': { description: Uploaded file is too large }
+        '500': { description: Internal server error }
+  /v1/gettasks:
+    post:
+      summary: Get task status
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [task_id]
+              properties:
+                task_id: { type: string }
+      responses:
+        '200': { description: Task status, content: { application/json: { schema: { $ref: '#/components/schemas/Task' } } } }
+        '401': { description: Invalid API key }
+        '404': { description: Task not found }
+        '500': { description: Internal server error }
+  /v1/balance:
+    get:
+      summary: Read account balance
+      responses:
+        '200': { description: Current balance, content: { application/json: { schema: { $ref: '#/components/schemas/Balance' } } } }
+        '401': { description: Invalid API key }
+        '502': { description: Balance service unavailable }
+components:
+  securitySchemes:
+    ApiKeyAuth: { type: apiKey, in: header, name: X-API-Key }
+  schemas:
+    Balance:
+      type: object
+      required: [balance]
+      properties:
+        balance: { type: number, format: double }
+    Task:
+      type: object
+      required: [task_id, status, total]
+      properties:
+        task_id: { type: string }
+        status: { type: string, enum: [pending, processing, exported, failed] }
+        total: { type: integer }
+        success: { type: integer }
+        failure: { type: integer }
+        result_url: { type: string, format: uri }
+        estimated_amount: { $ref: '#/components/schemas/Money' }
+        actual_amount: { $ref: '#/components/schemas/Money' }
+        message: { type: string }
+    Money:
+      type: object
+      properties:
+        amount: { type: string }
+        currency: { type: string, example: USD }
+    ResultRow:
+      type: object
+      properties:
+        "number": { type: string }
+        "activated": { type: string }
+        "age": { type: string }
+        "avatar": { type: string }
+        "category": { type: string }
+        "gender": { type: string }
+        "hair_color": { type: string }
+        "skin_color": { type: string }

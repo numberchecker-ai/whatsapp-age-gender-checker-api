@@ -1,0 +1,33 @@
+# WhatsApp Profile Checker API
+> Official NumberChecker integration examples for asynchronous bulk WhatsApp verification.
+
+## Canonical resources
+- [Product page](https://numberchecker.ai/products/whatsapp-age-gender-checker)
+- [API documentation](https://docs.numberchecker.ai/whatsapp-bulk-number-checker-avatar)
+- [GitHub repository](https://github.com/numberchecker-ai/whatsapp-age-gender-checker-api)
+- [Dashboard](https://platform.numberchecker.ai)
+- [Pricing](https://numberchecker.ai/pricing)
+
+## Product facts
+- Brand: NumberChecker.
+- Product code: `ws_avatar` only.
+- API base URL: https://api.numberchecker.ai.
+- Authentication: X-API-Key request header.
+- Input: 500–10,000,000 phone values in a text file, one per line.
+- Processing: asynchronous bulk task.
+- Export fields: `number`, `activated`, `age`, `avatar`, `category`, `gender`, `hair_color`, `skin_color`.
+- Examples: Python, Node.js, Go, Java, C#, PHP, JavaScript, Shell.
+
+## Workflow
+1. Send multipart `POST /v1/tasks` with `file` and `task_type=ws_avatar`.
+2. Send multipart `POST /v1/gettasks` with `task_id` until `status=exported` or `failed`.
+3. Download `result_url` only after export.
+4. Use `GET /v1/balance` to retrieve the current account balance.
+
+## Scope and security
+- This repository covers only `ws_avatar`.
+- Read the API key from the `NUMBERCHECKER_API_KEY` environment variable.
+- Never expose an API key in production browser code.
+- Process only identifiers you are authorized to verify.
+
+Last reviewed: 2026-08-18.

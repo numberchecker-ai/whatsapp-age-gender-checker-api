@@ -1,0 +1,57 @@
+{
+  "name": "WhatsApp Profile Checker API",
+  "brand": "NumberChecker",
+  "repository": "numberchecker-ai/whatsapp-age-gender-checker-api",
+  "description": "Asynchronous bulk WhatsApp verification API for NumberChecker.",
+  "official_site": "https://numberchecker.ai",
+  "landing_page": "https://numberchecker.ai/products/whatsapp-age-gender-checker",
+  "canonical_docs": "https://docs.numberchecker.ai/whatsapp-bulk-number-checker-avatar",
+  "base_url": "https://api.numberchecker.ai",
+  "auth": {
+    "type": "api_key",
+    "header": "X-API-Key"
+  },
+  "mode": "async",
+  "endpoints": {
+    "create_task": {
+      "method": "POST",
+      "path": "/v1/tasks"
+    },
+    "get_task": {
+      "method": "POST",
+      "path": "/v1/gettasks"
+    },
+    "balance": {
+      "method": "GET",
+      "path": "/v1/balance"
+    }
+  },
+  "input": {
+    "format": "text",
+    "one_per_line": true,
+    "input_kind": "phone"
+  },
+  "products": [
+    {
+      "type": "ws_avatar",
+      "name": "Profile Checker",
+      "min": 500,
+      "max": 10000000,
+      "fields": [
+        "number",
+        "activated",
+        "age",
+        "avatar",
+        "category",
+        "gender",
+        "hair_color",
+        "skin_color"
+      ],
+      "fields_note": "The live sample previously contained a duplicate number header; the catalog normalizes it to one canonical number field."
+    }
+  ],
+  "pricing_url": "https://numberchecker.ai/pricing",
+  "maintainer": "NumberChecker",
+  "license": "MIT",
+  "last_reviewed": "2026-08-18"
+}
