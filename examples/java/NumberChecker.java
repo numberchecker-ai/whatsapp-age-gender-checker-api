@@ -1,8 +1,93 @@
 // WhatsApp Profile Checker API — Java 11+ example. Docs: https://docs.numberchecker.ai/whatsapp-bulk-number-checker-avatar
-import java.io.*; import java.net.URI; import java.net.http.*; import java.nio.file.*;
-public class NumberChecker { static final String BASE="https://api.numberchecker.ai"; static final String TYPE="ws_avatar"; static final String KEY=requiredKey(); static final HttpClient HTTP=HttpClient.newHttpClient();
-  static String requiredKey() { String value=System.getenv("NUMBERCHECKER_API_KEY"); if(value==null||value.isBlank())throw new IllegalStateException("NUMBERCHECKER_API_KEY is required"); return value; }
-  static HttpRequest.BodyPublisher multipart(String boundary,byte[] bytes,String filename,String field,String value)throws IOException { var out=new ByteArrayOutputStream(); var head=("--"+boundary+"\r\nContent-Disposition: form-data; name=\"file\"; filename=\""+filename+"\"\r\nContent-Type: text/plain\r\n\r\n").getBytes(); out.write(head); out.write(bytes); out.write(("\r\n--"+boundary+"\r\nContent-Disposition: form-data; name=\""+field+"\"\r\n\r\n"+value+"\r\n--"+boundary+"--\r\n").getBytes()); return HttpRequest.BodyPublishers.ofByteArray(out.toByteArray()); }
-  static HttpRequest.BodyPublisher form(String boundary,String field,String value)throws IOException { var body=("--"+boundary+"\r\nContent-Disposition: form-data; name=\""+field+"\"\r\n\r\n"+value+"\r\n--"+boundary+"--\r\n").getBytes(); return HttpRequest.BodyPublishers.ofByteArray(body); }
-  static String field(String json,String name) { int i=json.indexOf("\""+name+"\""); if(i<0)return null; int c=json.indexOf(':',i)+1; while(c<json.length()&&(json.charAt(c)==' '||json.charAt(c)=='\"'))c++; int e=c; while(e<json.length()&&json.charAt(e)!='\"'&&json.charAt(e)!=','&&json.charAt(e)!='}')e++; return json.substring(c,e); }
-  public static void main(String[] args)throws Exception { String boundary="----numberchecker"+System.currentTimeMillis(); var create=HttpRequest.newBuilder(URI.create(BASE+"/v1/tasks")).header("X-API-Key",KEY).header("Content-Type","multipart/form-data; boundary="+boundary).POST(multipart(boundary,Files.readAllBytes(Path.of("examples/numbers.txt")),"numbers.txt","task_type",TYPE)).build(); String id=field(HTTP.send(create,HttpResponse.BodyHandlers.ofString()).body(),"task_id"); System.out.println("task_id: "+id); String body; for(;;){ String b="----numberchecker"+System.currentTimeMillis(); var get=HttpRequest.newBuilder(URI.create(BASE+"/v1/gettasks")).header("X-API-Key",KEY).header("Content-Type","multipart/form-data; boundary="+b).POST(form(b,"task_id",id)).build(); body=HTTP.send(get,HttpResponse.BodyHandlers.ofString()).body(); String status=field(body,"status"); System.out.println("status: "+status); if("exported".equals(status))break; if("failed".equals(status))throw new RuntimeException("task failed"); Thread.sleep(5000); } String result=field(body,"result_url"); if(result!=null&&!result.isBlank()){ var download=HTTP.send(HttpRequest.newBuilder(URI.create(result)).GET().build(),HttpResponse.BodyHandlers.ofFile(Path.of("results.zip"))); if(download.statusCode()!=200)throw new IOException("download failed: "+download.statusCode()); System.out.println("saved to: results.zip"); } } }
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+public class NumberChecker {
+    static final String BASE = "https://api.numberchecker.ai";
+    static final String TYPE = "ws_avatar";
+    static final String KEY = requiredKey();
+    static final HttpClient HTTP = HttpClient.newHttpClient();
+
+    static String requiredKey() {
+        String value = System.getenv("NUMBERCHECKER_API_KEY");
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("NUMBERCHECKER_API_KEY is required");
+        }
+        return value;
+    }
+
+    static HttpRequest.BodyPublisher multipart(String boundary, byte[] bytes, String filename, String field, String value) throws IOException {
+        var out = new ByteArrayOutputStream();
+        var head = ("--" + boundary + "\r\n"
+                + "Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"\r\n"
+                + "Content-Type: text/plain\r\n\r\n").getBytes();
+        out.write(head);
+        out.write(bytes);
+        out.write(("\r\n--" + boundary + "\r\n"
+                + "Content-Disposition: form-data; name=\"" + field + "\"\r\n\r\n"
+                + value + "\r\n--" + boundary + "--\r\n").getBytes());
+        return HttpRequest.BodyPublishers.ofByteArray(out.toByteArray());
+    }
+
+    static HttpRequest.BodyPublisher form(String boundary, String field, String value) {
+        var body = ("--" + boundary + "\r\n"
+                + "Content-Disposition: form-data; name=\"" + field + "\"\r\n\r\n"
+                + value + "\r\n--" + boundary + "--\r\n").getBytes();
+        return HttpRequest.BodyPublishers.ofByteArray(body);
+    }
+
+    static String field(String json, String name) {
+        int i = json.indexOf("\"" + name + "\"");
+        if (i < 0) return null;
+        int c = json.indexOf(':', i) + 1;
+        while (c < json.length() && (json.charAt(c) == ' ' || json.charAt(c) == '"')) c++;
+        int e = c;
+        while (e < json.length() && json.charAt(e) != '"' && json.charAt(e) != ',' && json.charAt(e) != '}') e++;
+        return json.substring(c, e);
+    }
+
+    public static void main(String[] args) throws Exception {
+        String boundary = "----numberchecker" + System.currentTimeMillis();
+        byte[] fileBytes = Files.readAllBytes(Path.of("examples/numbers.txt"));
+        var createReq = HttpRequest.newBuilder(URI.create(BASE + "/v1/tasks"))
+                .header("X-API-Key", KEY)
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .POST(multipart(boundary, fileBytes, "numbers.txt", "task_type", TYPE))
+                .build();
+        String id = field(HTTP.send(createReq, HttpResponse.BodyHandlers.ofString()).body(), "task_id");
+        System.out.println("task_id: " + id);
+
+        String body;
+        for (;;) {
+            String pollBoundary = "----numberchecker" + System.currentTimeMillis();
+            var getReq = HttpRequest.newBuilder(URI.create(BASE + "/v1/gettasks"))
+                    .header("X-API-Key", KEY)
+                    .header("Content-Type", "multipart/form-data; boundary=" + pollBoundary)
+                    .POST(form(pollBoundary, "task_id", id))
+                    .build();
+            body = HTTP.send(getReq, HttpResponse.BodyHandlers.ofString()).body();
+            String status = field(body, "status");
+            System.out.println("status: " + status);
+            if ("exported".equals(status)) break;
+            if ("failed".equals(status)) throw new RuntimeException("task failed");
+            Thread.sleep(5000);
+        }
+
+        String result = field(body, "result_url");
+        if (result != null && !result.isBlank()) {
+            var download = HTTP.send(
+                    HttpRequest.newBuilder(URI.create(result)).GET().build(),
+                    HttpResponse.BodyHandlers.ofFile(Path.of("results.zip")));
+            if (download.statusCode() != 200) {
+                throw new IOException("download failed: " + download.statusCode());
+            }
+            System.out.println("saved to: results.zip");
+        }
+    }
+}

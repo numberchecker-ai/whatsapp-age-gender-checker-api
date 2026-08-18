@@ -1,6 +1,68 @@
 // WhatsApp Profile Checker API — .NET 6+ example. Docs: https://docs.numberchecker.ai/whatsapp-bulk-number-checker-avatar
-using System; using System.IO; using System.Net.Http; using System.Text.Json; using System.Threading.Tasks;
-class NumberChecker { const string Base="https://api.numberchecker.ai"; const string Type="ws_avatar"; static readonly HttpClient Http=new(); static readonly string Key=RequiredKey();
- static string RequiredKey() { var value=Environment.GetEnvironmentVariable("NUMBERCHECKER_API_KEY"); if(string.IsNullOrWhiteSpace(value))throw new InvalidOperationException("NUMBERCHECKER_API_KEY is required"); return value; }
- static async Task<JsonElement> Post(string path, MultipartFormDataContent form) { using var request=new HttpRequestMessage(HttpMethod.Post,Base+path){Content=form}; request.Headers.Add("X-API-Key",Key); using var response=await Http.SendAsync(request); response.EnsureSuccessStatusCode(); return JsonSerializer.Deserialize<JsonElement>(await response.Content.ReadAsStringAsync()); }
- static async Task Main() { using var file=new ByteArrayContent(File.ReadAllBytes("examples/numbers.txt")); var form=new MultipartFormDataContent(); form.Add(file,"file","numbers.txt"); form.Add(new StringContent(Type),"task_type"); var created=await Post("/v1/tasks",form); var id=created.GetProperty("task_id").GetString(); Console.WriteLine("task_id: "+id); JsonElement finalTask=default; while(true){ using var statusForm=new MultipartFormDataContent(); statusForm.Add(new StringContent(id!),"task_id"); var task=await Post("/v1/gettasks",statusForm); var status=task.GetProperty("status").GetString(); Console.WriteLine("status: "+status); if(status=="exported"){ finalTask=task; break; } if(status=="failed")throw new Exception("task failed"); await Task.Delay(5000); } if(finalTask.TryGetProperty("result_url",out var result)&&result.GetString() is string url&&!string.IsNullOrWhiteSpace(url)){ File.WriteAllBytes("results.zip",await Http.GetByteArrayAsync(url)); Console.WriteLine("saved to: results.zip"); } } }
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+class NumberChecker
+{
+    const string Base = "https://api.numberchecker.ai";
+    const string Type = "ws_avatar";
+    static readonly HttpClient Http = new();
+    static readonly string Key = RequiredKey();
+
+    static string RequiredKey()
+    {
+        var value = Environment.GetEnvironmentVariable("NUMBERCHECKER_API_KEY");
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException("NUMBERCHECKER_API_KEY is required");
+        }
+        return value;
+    }
+
+    static async Task<JsonElement> Post(string path, MultipartFormDataContent form)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, Base + path) { Content = form };
+        request.Headers.Add("X-API-Key", Key);
+        using var response = await Http.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        return JsonSerializer.Deserialize<JsonElement>(await response.Content.ReadAsStringAsync());
+    }
+
+    static async Task Main()
+    {
+        using var file = new ByteArrayContent(File.ReadAllBytes("examples/numbers.txt"));
+        var form = new MultipartFormDataContent();
+        form.Add(file, "file", "numbers.txt");
+        form.Add(new StringContent(Type), "task_type");
+
+        var created = await Post("/v1/tasks", form);
+        var id = created.GetProperty("task_id").GetString();
+        Console.WriteLine("task_id: " + id);
+
+        JsonElement finalTask = default;
+        while (true)
+        {
+            using var statusForm = new MultipartFormDataContent();
+            statusForm.Add(new StringContent(id!), "task_id");
+            var task = await Post("/v1/gettasks", statusForm);
+            var status = task.GetProperty("status").GetString();
+            Console.WriteLine("status: " + status);
+            if (status == "exported")
+            {
+                finalTask = task;
+                break;
+            }
+            if (status == "failed") throw new Exception("task failed");
+            await Task.Delay(5000);
+        }
+
+        if (finalTask.TryGetProperty("result_url", out var result) && result.GetString() is string url && !string.IsNullOrWhiteSpace(url))
+        {
+            File.WriteAllBytes("results.zip", await Http.GetByteArrayAsync(url));
+            Console.WriteLine("saved to: results.zip");
+        }
+    }
+}
