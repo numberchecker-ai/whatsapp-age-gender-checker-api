@@ -1,6 +1,6 @@
 # WhatsApp Profile Checker API — Bulk Verification | NumberChecker
 
-The **WhatsApp Profile Checker API** accepts a text file of phone numbers, creates an asynchronous bulk task, and exports a result file. This repository contains a runnable integration in eight languages.
+The **WhatsApp Profile Checker API** accepts a text file of phone numbers, creates an asynchronous bulk task, and exports a result file. This repository contains a runnable integration in seven languages.
 
 - **Product page:** https://numberchecker.ai/products/whatsapp-age-gender-checker
 - **API documentation:** https://docs.numberchecker.ai/whatsapp-bulk-number-checker-avatar
@@ -58,10 +58,9 @@ Complete submit → poll → download clients are available in the server-side e
 - [`examples/java`](examples/java)
 - [`examples/csharp`](examples/csharp)
 - [`examples/php`](examples/php)
-- [`examples/javascript`](examples/javascript)
 - [`examples/shell`](examples/shell)
 
-Run the server-side examples from the repository root using the exact commands listed in each language README; each command passes `examples/numbers.txt`. The browser example returns the exported `result_url` to the caller and expects a same-origin backend proxy to add `X-API-Key` server-side. All server-side examples read `NUMBERCHECKER_API_KEY` from the environment and fail fast if it is missing.
+Run the server-side examples from the repository root using the exact commands listed in each language README; each command passes `examples/numbers.txt`. All server-side examples read `NUMBERCHECKER_API_KEY` from the environment and fail fast if it is missing.
 
 ## FAQ
 
